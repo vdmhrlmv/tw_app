@@ -1,0 +1,35 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres
+    container_name: twit_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "--quiet" ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    env_file:
+      - .env.prod
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/:/var/lib/postgresql/data
+      - ./docker/postgres/:/docker-entrypoint-initdb.d
+
+  app:
+    build: ./
+    container_name: twit_app
+    entrypoint: /usr/src/pad/docker/app.sh
+    env_file:
+      - .env.prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./logs/:/usr/src/pad/app_twitter/service/logs
+    ports:
+      - "80:5000"
